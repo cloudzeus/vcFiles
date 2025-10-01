@@ -11,6 +11,9 @@ import WeeklyUploadsBarChart from "@/components/charts/weekly-uploads-bar-chart"
 import DeletedFilesBarChart from "@/components/charts/deleted-files-bar-chart"
 import GenerateFoldersButton from "@/components/generate-folders-button"
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const user = await getCurrentUser()
   

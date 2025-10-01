@@ -3,6 +3,9 @@ import { redirect } from "next/navigation"
 import DashboardLayout from "@/components/dashboard-layout"
 import SharedItemsClient from "@/components/shared-items-client"
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic'
+
 export default async function SharedItemsPage() {
   const user = await getCurrentUser()
   
@@ -27,3 +30,4 @@ export default async function SharedItemsPage() {
     </DashboardLayout>
   )
 }
+

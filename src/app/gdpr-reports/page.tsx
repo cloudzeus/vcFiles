@@ -3,6 +3,9 @@ import { redirect } from "next/navigation"
 import DashboardLayout from "@/components/dashboard-layout"
 import GdprReportsClient from "@/components/gdpr-reports-client"
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic'
+
 export default async function GdprReportsPage() {
   const user = await getCurrentUser()
   
@@ -32,3 +35,4 @@ export default async function GdprReportsPage() {
     </DashboardLayout>
   )
 }
+

@@ -53,9 +53,17 @@ export default async function SharedItemPage({ params }: SharedItemPageProps) {
     )
   }
 
+  // Transform Date fields to strings for the component
+  const transformedSharedItem = {
+    ...sharedItem,
+    sharedAt: sharedItem.sharedAt.toISOString(),
+    expiresAt: sharedItem.expiresAt?.toISOString() || null,
+    shareLinkExpiresAt: sharedItem.shareLinkExpiresAt?.toISOString() || null,
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <SharedItemView sharedItem={sharedItem} />
+      <SharedItemView sharedItem={transformedSharedItem} />
     </div>
   )
 }

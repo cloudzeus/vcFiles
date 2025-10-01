@@ -32,6 +32,7 @@ export async function PUT(
     // Update user basic information
     const updateData = {
       name: body.name,
+      email: body.email,
       role: body.role,
       phone: body.phone,
       mobile: body.mobile,

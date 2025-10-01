@@ -21,7 +21,7 @@ interface User {
   country: string | null;
   image: string | null;
   createdAt?: string;
-  userDepartments: Array<{
+  userDepartments?: Array<{
     id: string;
     jobPosition: string;
     isManager: boolean;
@@ -172,7 +172,7 @@ export default function UserManagementTable() {
         <div className="space-y-3">
           {users.map((user) => {
             const isExpanded = expandedRows.has(user.id);
-            const hasDepartments = user.userDepartments.length > 0;
+            const hasDepartments = (user.userDepartments?.length ?? 0) > 0;
             
             return (
               <div key={user.id} className="border rounded-lg overflow-hidden">
@@ -301,7 +301,7 @@ export default function UserManagementTable() {
                         </h4>
                         {hasDepartments ? (
                           <div className="space-y-3">
-                            {user.userDepartments.map((userDept) => (
+                            {user.userDepartments?.map((userDept) => (
                               <div key={userDept.id} className="p-3 bg-gray-50 rounded-lg border">
                                 <div className="flex items-center justify-between">
                                   <div>

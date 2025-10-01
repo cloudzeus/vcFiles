@@ -5,6 +5,9 @@ import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import ContactsPageClient from './contacts-page-client'
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic'
+
 export default async function ContactsPage() {
   const user = await getCurrentUser()
   

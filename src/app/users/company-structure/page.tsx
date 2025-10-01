@@ -2,7 +2,39 @@ import { getCurrentUser } from "@/lib/auth-utils"
 import { redirect } from "next/navigation"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building, Users, TrendingUp, Plus, Edit, Trash2 } from "lucide-react"
+import { Building, Users, TrendingUp, Plus, Edit, Trash2, MapPin } from "lucide-react"
+import { Suspense } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
+
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic'
+
+// Fetch company structure data
+async function getCompanyStructureData() {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/company-structure`, {
+      cache: 'no-store' // Always fetch fresh data
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch company structure data');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching company structure:', error);
+    return {
+      departments: [],
+      statistics: {
+        totalDepartments: 0,
+        totalEmployees: 0,
+        totalRoles: 0,
+        totalLocations: 0,
+      },
+      locations: [],
+    };
+  }
+}
 
 export default async function CompanyStructurePage() {
   const user = await getCurrentUser()
@@ -10,6 +42,8 @@ export default async function CompanyStructurePage() {
   if (!user) {
     redirect("/auth/signin")
   }
+
+  const companyData = await getCompanyStructureData()
 
   return (
     <DashboardLayout user={user}>
@@ -36,7 +70,7 @@ export default async function CompanyStructurePage() {
                   <Building className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">8</p>
+                  <p className="text-2xl font-bold text-gray-900">{companyData.statistics.totalDepartments}</p>
                   <p className="text-sm text-gray-600">Departments</p>
                 </div>
               </div>
@@ -50,7 +84,7 @@ export default async function CompanyStructurePage() {
                   <Users className="h-6 w-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">24</p>
+                  <p className="text-2xl font-bold text-gray-900">{companyData.statistics.totalEmployees}</p>
                   <p className="text-sm text-gray-600">Employees</p>
                 </div>
               </div>
@@ -64,8 +98,8 @@ export default async function CompanyStructurePage() {
                   <TrendingUp className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">5</p>
-                  <p className="text-sm text-gray-600">Levels</p>
+                  <p className="text-2xl font-bold text-gray-900">{companyData.statistics.totalRoles}</p>
+                  <p className="text-sm text-gray-600">Roles</p>
                 </div>
               </div>
             </CardContent>
@@ -75,10 +109,10 @@ export default async function CompanyStructurePage() {
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Building className="h-6 w-6 text-orange-600" />
+                  <MapPin className="h-6 w-6 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">3</p>
+                  <p className="text-2xl font-bold text-gray-900">{companyData.statistics.totalLocations}</p>
                   <p className="text-sm text-gray-600">Locations</p>
                 </div>
               </div>
@@ -93,134 +127,182 @@ export default async function CompanyStructurePage() {
             <CardDescription>Current company structure and reporting relationships</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              {/* Level 1 - CEO */}
-              <div className="flex justify-center">
-                <div className="bg-blue-600 text-white px-6 py-3 rounded-lg text-center">
-                  <h3 className="font-semibold">CEO</h3>
-                  <p className="text-sm opacity-90">John Smith</p>
-                  <p className="text-xs opacity-75">Chief Executive Officer</p>
-                </div>
-              </div>
-
-              {/* Level 2 - Direct Reports */}
-              <div className="flex justify-center">
-                <div className="w-px h-8 bg-gray-300"></div>
-              </div>
-
-              <div className="flex justify-center gap-8">
-                <div className="bg-green-600 text-white px-4 py-2 rounded-lg text-center">
-                  <h4 className="font-medium">CTO</h4>
-                  <p className="text-xs opacity-90">Sarah Johnson</p>
-                </div>
-                <div className="bg-green-600 text-white px-4 py-2 rounded-lg text-center">
-                  <h4 className="font-medium">CFO</h4>
-                  <p className="text-xs opacity-90">Mike Davis</p>
-                </div>
-                <div className="bg-green-600 text-white px-4 py-2 rounded-lg text-center">
-                  <h4 className="font-medium">COO</h4>
-                  <p className="text-xs opacity-90">Lisa Wilson</p>
-                </div>
-              </div>
-
-              {/* Level 3 - Department Heads */}
-              <div className="flex justify-center">
-                <div className="w-px h-8 bg-gray-300"></div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 max-w-4xl mx-auto">
-                <div className="space-y-2">
-                  <div className="bg-blue-500 text-white px-3 py-2 rounded text-center text-sm">
-                    <p className="font-medium">Engineering</p>
-                    <p className="text-xs opacity-90">Alex Chen</p>
-                  </div>
-                  <div className="bg-blue-500 text-white px-3 py-2 rounded text-center text-sm">
-                    <p className="font-medium">Product</p>
-                    <p className="text-xs opacity-90">Emma Brown</p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="bg-green-500 text-white px-3 py-2 rounded text-center text-sm">
-                    <p className="font-medium">Marketing</p>
-                    <p className="text-xs opacity-90">David Lee</p>
-                  </div>
-                  <div className="bg-green-500 text-white px-3 py-2 rounded text-center text-sm">
-                    <p className="font-medium">Sales</p>
-                    <p className="text-xs opacity-90">Rachel Green</p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="bg-purple-500 text-white px-3 py-2 rounded text-center text-sm">
-                    <p className="font-medium">HR</p>
-                    <p className="text-xs opacity-90">Tom Wilson</p>
-                  </div>
-                  <div className="bg-purple-500 text-white px-3 py-2 rounded text-center text-sm">
-                    <p className="font-medium">Finance</p>
-                    <p className="text-xs opacity-90">Anna Garcia</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Suspense fallback={<OrganizationChartSkeleton />}>
+              <OrganizationChart departments={companyData.departments} />
+            </Suspense>
           </CardContent>
         </Card>
 
         {/* Department Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-blue-600" />
-                Engineering Team
-              </CardTitle>
-              <CardDescription>Software development and technical operations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
-                  <span className="font-medium">Team Size</span>
-                  <span className="text-blue-600 font-semibold">8 members</span>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-green-50 rounded">
-                  <span className="font-medium">Projects</span>
-                  <span className="text-green-600 font-semibold">12 active</span>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-purple-50 rounded">
-                  <span className="font-medium">Technologies</span>
-                  <span className="text-purple-600 font-semibold">8 stacks</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-green-600" />
-                Marketing Team
-              </CardTitle>
-              <CardDescription>Brand management and customer acquisition</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
-                  <span className="font-medium">Team Size</span>
-                  <span className="text-blue-600 font-semibold">5 members</span>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-green-50 rounded">
-                  <span className="font-medium">Campaigns</span>
-                  <span className="text-green-600 font-semibold">6 active</span>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-purple-50 rounded">
-                  <span className="font-medium">Channels</span>
-                  <span className="text-purple-600 font-semibold">4 platforms</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <Suspense fallback={<DepartmentDetailsSkeleton />}>
+          <DepartmentDetails departments={companyData.departments} />
+        </Suspense>
       </div>
     </DashboardLayout>
   )
+}
+
+// Organization Chart Component
+function OrganizationChart({ departments }: { departments: any[] }) {
+  // Group departments by hierarchy level
+  const topLevelDepartments = departments.filter(dept => !dept.parentId);
+  const childDepartments = departments.filter(dept => dept.parentId);
+
+  if (departments.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <Building className="h-12 w-12 mx-auto mb-4 opacity-50" />
+        <p>No departments found. Add departments to see the organizational structure.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Top Level Departments */}
+      <div className="flex justify-center gap-4 flex-wrap">
+        {topLevelDepartments.map((dept) => (
+          <div key={dept.id} className="bg-blue-600 text-white px-4 py-3 rounded-lg text-center min-w-[200px]">
+            <h3 className="font-semibold">{dept.name}</h3>
+            {dept.manager && (
+              <>
+                <p className="text-sm opacity-90">{dept.manager.name || 'No Manager'}</p>
+                <p className="text-xs opacity-75">{dept.manager.role}</p>
+              </>
+            )}
+            <div className="mt-2 text-xs opacity-75">
+              {dept.userDepartments.length} employees
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Child Departments */}
+      {childDepartments.length > 0 && (
+        <>
+          <div className="flex justify-center">
+            <div className="w-px h-8 bg-gray-300"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+            {childDepartments.map((dept) => (
+              <div key={dept.id} className="bg-gray-600 text-white px-3 py-2 rounded text-center">
+                <p className="font-medium">{dept.name}</p>
+                {dept.manager && (
+                  <p className="text-xs opacity-90">{dept.manager.name || 'No Manager'}</p>
+                )}
+                <div className="mt-1 text-xs opacity-75">
+                  {dept.userDepartments.length} employees
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Department Details Component
+function DepartmentDetails({ departments }: { departments: any[] }) {
+  if (departments.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+        <p>No departments found. Add departments to see detailed information.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {departments.slice(0, 6).map((dept, index) => {
+        const colors = [
+          'blue', 'green', 'purple', 'orange', 'red', 'indigo'
+        ];
+        const color = colors[index % colors.length];
+        
+        return (
+          <Card key={dept.id}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className={`h-5 w-5 text-${color}-600`} />
+                {dept.name}
+              </CardTitle>
+              <CardDescription>
+                {dept.description || 'Department team and roles'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className={`flex items-center justify-between p-2 bg-${color}-50 rounded`}>
+                  <span className="font-medium">Team Size</span>
+                  <span className={`text-${color}-600 font-semibold`}>
+                    {dept.userDepartments.length} members
+                  </span>
+                </div>
+                <div className={`flex items-center justify-between p-2 bg-green-50 rounded`}>
+                  <span className="font-medium">Active Roles</span>
+                  <span className="text-green-600 font-semibold">
+                    {dept.departmentRoles.length} roles
+                  </span>
+                </div>
+                <div className={`flex items-center justify-between p-2 bg-purple-50 rounded`}>
+                  <span className="font-medium">Manager</span>
+                  <span className="text-purple-600 font-semibold">
+                    {dept.manager?.name || 'Not assigned'}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+// Skeleton Components
+function OrganizationChartSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-center gap-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 w-48" />
+        ))}
+      </div>
+      <div className="flex justify-center">
+        <Skeleton className="w-px h-8" />
+      </div>
+      <div className="grid grid-cols-3 gap-4 max-w-4xl mx-auto">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DepartmentDetailsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <Card key={i}>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, j) => (
+                <div key={j} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 }

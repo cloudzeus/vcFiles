@@ -82,7 +82,7 @@ if (typeof window === 'undefined') {
       } catch (error) {
         console.log('🏓 Redis health check failed, attempting reconnection...');
         // Only reconnect if not already connecting/connected
-        if (redis.status === 'end' || redis.status === 'close') {
+        if (redis.status !== 'ready' && redis.status !== 'connecting') {
           try {
             await redis.connect();
           } catch (connectError) {

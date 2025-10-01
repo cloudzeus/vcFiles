@@ -1,8 +1,10 @@
 import { getCurrentUser } from "@/lib/auth-utils"
 import { redirect } from "next/navigation"
 import DashboardLayout from "@/components/dashboard-layout"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+
 import { 
   User, 
   Mail, 
@@ -13,7 +15,11 @@ import {
   Shield,
   Users
 } from "lucide-react"
+
 import { prisma } from "@/lib/prisma"
+
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic'
 
 export default async function UserProfilePage() {
   const user = await getCurrentUser()

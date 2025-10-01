@@ -4,6 +4,9 @@ import { Logo } from "@/components/ui/logo"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Shield, Users, Settings, Database, Activity, Lock } from "lucide-react"
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic'
+
 export default async function AdminPage() {
   const user = await getCurrentUser()
   

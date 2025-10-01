@@ -1,9 +1,13 @@
 import { getCurrentUser } from "@/lib/auth-utils"
 import { redirect } from "next/navigation"
 import DashboardLayout from "@/components/dashboard-layout"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Building, Shield, Plus } from "lucide-react"
 import UserManagementTable from "@/components/user-management-table"
+
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic'
 
 export default async function UsersPage() {
   const user = await getCurrentUser()

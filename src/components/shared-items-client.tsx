@@ -28,28 +28,21 @@ interface SharedItem {
   canEdit: boolean
   canDelete: boolean
   description: string | null
-  shareLink?: string | null
+  shareLink: string | null
   sharedByUser?: {
-    id: string
-    name: string | null
-    email: string
-  }
-  sharedWithUser?: {
-    id: string
     name: string | null
     email: string
   }
   sharedWithContact?: {
-    id: number
     name: string
     email: string | null
-  }
+  } | null
 }
 
 interface SharedItemsClientProps {
   user: {
     id: string
-    name: string | null
+    name?: string | null
     email: string
     role: string
   }
@@ -60,302 +53,217 @@ export default function SharedItemsClient({ user }: SharedItemsClientProps) {
   const [sharedWithMe, setSharedWithMe] = useState<SharedItem[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'shared-with-me' | 'shared-by-me'>('shared-with-me')
-  
   const { toast } = useToast()
 
-  useEffect(() => {
-    fetchSharedItems()
-  }, [activeTab])
+  const fileTypeIcons = {
+    'pdf': FileText,
+    'doc': FileText,
+    'docx': FileText,
+    'txt': FileText,
+    'jpg': Image,
+    'jpeg': Image,
+    'png': Image,
+    'gif': Image,
+    'mp4': Video,
+    'avi': Video,
+    'mov': Video,
+    'mp3': Music,
+    'wav': Music,
+    'zip': Archive,
+    'rar': Archive,
+    'js': Code,
+    'ts': Code,
+    'py': Code,
+    'xlsx': FileSpreadsheet,
+    'csv': FileSpreadsheet,
+    'ppt': Presentation,
+    'pptx': Presentation,
+  }
+
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase()
+    const IconComponent = fileTypeIcons[extension as keyof typeof fileTypeIcons] || File
+    return <IconComponent className="h-5 w-5" />
+  }
 
   const fetchSharedItems = async () => {
+    setLoading(true)
     try {
-      setLoading(true)
-      const response = await fetch(`/api/sharing?type=${activeTab}`)
+      const response = await fetch('/api/sharing')
       if (response.ok) {
         const data = await response.json()
-        if (activeTab === 'shared-with-me') {
-          setSharedWithMe(data.sharedItems || [])
-        } else {
-          setSharedByMe(data.sharedItems || [])
-        }
+        setSharedWithMe(data.sharedWithMe || [])
+        setSharedByMe(data.sharedByMe || [])
       }
     } catch (error) {
       console.error('Error fetching shared items:', error)
       toast({
-        title: "Error",
-        description: "Failed to fetch shared items",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to fetch shared items',
+        variant: 'destructive',
       })
     } finally {
       setLoading(false)
     }
   }
 
-  const getFileIcon = (fileType: string) => {
-    const iconMap: Record<string, React.ComponentType<any>> = {
-      'txt': FileText,
-      'pdf': FileText,
-      'doc': FileText,
-      'docx': FileText,
-      'jpg': Image,
-      'jpeg': Image,
-      'png': Image,
-      'gif': Image,
-      'mp4': Video,
-      'avi': Video,
-      'mov': Video,
-      'mp3': Audio,
-      'wav': Audio,
-      'zip': Archive,
-      'rar': Archive,
-      'js': Code,
-      'ts': Code,
-      'py': Code,
-      'xlsx': FileSpreadsheet,
-      'xls': FileSpreadsheet,
-      'pptx': Presentation,
-      'ppt': Presentation
-    }
-    
-    const extension = fileType.toLowerCase()
-    return iconMap[extension] || File
-  }
-
-  const handleDownload = async (itemPath: string) => {
+  const handleDownload = async (itemPath: string, itemName: string) => {
     try {
-      const response = await fetch('/api/cdn/download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filePath: itemPath })
-      })
+      const response = await fetch(`/api/cdn/download?path=${encodeURIComponent(itemPath)}`)
       
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = itemPath.split('/').pop() || 'download'
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
-        window.URL.revokeObjectURL(url)
-        
-        toast({
-          title: "Success",
-          description: "File downloaded successfully"
-        })
-      } else {
+      if (!response.ok) {
         throw new Error('Download failed')
       }
-    } catch (error) {
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = itemName
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
       toast({
-        title: "Error",
-        description: "Failed to download file",
-        variant: "destructive"
+        title: 'Success',
+        description: 'File downloaded successfully',
+      })
+    } catch (error) {
+      console.error('Download error:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to download file',
+        variant: 'destructive',
       })
     }
   }
 
-  const copyShareLink = (shareLink: string) => {
-    const baseUrl = window.location.origin
-    const fullLink = `${baseUrl}/shared/${shareLink}`
-    navigator.clipboard.writeText(fullLink)
-    toast({
-      title: "Copied",
-      description: "Share link copied to clipboard"
-    })
-  }
+  useEffect(() => {
+    fetchSharedItems()
+  }, [])
 
-  const isExpired = (dateString: string | null) => {
-    if (!dateString) return false
-    return new Date(dateString) < new Date()
-  }
-
-  const renderSharedItem = (item: SharedItem, isOwner: boolean = false) => (
+  const renderSharedItem = (item: SharedItem) => (
     <Card key={item.id} className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              {item.itemType === 'folder' ? (
-                <Folder className="h-5 w-5 text-blue-600" />
-              ) : (
-                React.createElement(getFileIcon((item.itemName.split('.').pop() || 'file')), { 
-                  className: 'h-5 w-5 text-green-600' 
-                })
-              )}
-            </div>
-            
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3 flex-1">
+            {getFileIcon(item.itemName)}
             <div className="flex-1 min-w-0">
-              <h4 className="font-medium truncate">{item.itemName}</h4>
-              <p className="text-sm text-gray-600">
-                Type: {item.itemType === 'folder' ? 'Folder' : 'File'}
-                {item.description && ` • ${item.description}`}
+              <h3 className="font-medium text-gray-900 truncate">
+                {item.itemName}
+              </h3>
+              <p className="text-sm text-gray-500 truncate">
+                {item.description || 'No description'}
               </p>
-              
-              <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  Shared: {format(new Date(item.sharedAt), 'MMM d, yyyy')}
-                </div>
-                
-                {item.expiresAt && (
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    Expires: {format(new Date(item.expiresAt), 'MMM d, yyyy')}
-                    {isExpired(item.expiresAt) && (
-                      <Badge variant="destructive" className="text-xs">Expired</Badge>
-                    )}
-                  </div>
-                )}
-                
-                {item.shareLinkExpiresAt && (
-                  <div className="flex items-center gap-1">
-                    <Link className="h-3 w-3" />
-                    Link expires: {format(new Date(item.shareLinkExpiresAt), 'MMM d, yyyy')}
-                    {isExpired(item.shareLinkExpiresAt) && (
-                      <Badge variant="destructive" className="text-xs">Link Expired</Badge>
-                    )}
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2 mt-2">
-                {item.sharingType === 'user' ? (
-                  <div className="flex items-center gap-1 text-xs text-gray-600">
-                    <User className="h-3 w-3" />
-                    {isOwner ? 'Shared with: ' : 'Shared by: '}
-                    {isOwner 
-                      ? (item.sharedWithUser?.name || item.sharedWithUser?.email || 'Unknown user')
-                      : (item.sharedByUser?.name || item.sharedByUser?.email || 'Unknown user')
-                    }
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 text-xs text-gray-600">
-                    <Mail className="h-3 w-3" />
-                    {isOwner ? 'Shared with: ' : 'Shared by: '}
-                    {isOwner 
-                      ? (item.sharedWithContact?.name || 'Unknown contact')
-                      : (item.sharedByUser?.name || item.sharedByUser?.email || 'Unknown user')
-                    }
-                  </div>
+              <div className="flex items-center space-x-2 mt-1">
+                <span className="text-xs text-gray-400">
+                  {format(new Date(item.sharedAt), 'MMM d, yyyy')}
+                </span>
+                {item.sharedByUser && (
+                  <>
+                    <span className="text-xs text-gray-400">•</span>
+                    <span className="text-xs text-gray-400">
+                      by {item.sharedByUser.name || item.sharedByUser.email}
+                    </span>
+                  </>
                 )}
               </div>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {item.canDownload && item.itemType === 'file' && (
+          <div className="flex items-center space-x-2">
+            {item.canDownload && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={() => handleDownload(item.itemPath)}
-                title="Download"
+                onClick={() => handleDownload(item.itemPath, item.itemName)}
               >
                 <Download className="h-4 w-4" />
               </Button>
             )}
-            
-            {isOwner && item.sharingType === 'contact' && (
+            {item.shareLink && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={() => copyShareLink(item.shareLink || '')}
-                title="Copy share link"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/shared/${item.shareLink}`)
+                  toast({
+                    title: 'Success',
+                    description: 'Share link copied to clipboard',
+                  })
+                }}
               >
-                <ExternalLink className="h-4 w-4" />
+                <Share className="h-4 w-4" />
               </Button>
             )}
-          </div>
-        </div>
-        
-        {/* Permissions */}
-        <div className="mt-3 pt-3 border-t">
-          <div className="flex items-center gap-4 text-xs">
-            <span className="text-gray-600">Permissions:</span>
-            <div className="flex gap-2">
-              <Badge variant={item.canView ? "default" : "secondary"}>
-                View {item.canView ? "✓" : "✗"}
-              </Badge>
-              <Badge variant={item.canDownload ? "default" : "secondary"}>
-                Download {item.canDownload ? "✓" : "✗"}
-              </Badge>
-              <Badge variant={item.canEdit ? "default" : "secondary"}>
-                Edit {item.canEdit ? "✓" : "✗"}
-              </Badge>
-              <Badge variant={item.canDelete ? "default" : "secondary"}>
-                Delete {item.canDelete ? "✓" : "✗"}
-              </Badge>
-            </div>
           </div>
         </div>
       </CardContent>
     </Card>
   )
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'shared-with-me' | 'shared-by-me')}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="shared-with-me" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Shared with Me ({sharedWithMe.length})
-          </TabsTrigger>
-          <TabsTrigger value="shared-by-me" className="flex items-center gap-2">
-            <Share className="h-4 w-4" />
-            Shared by Me ({sharedByMe.length})
-          </TabsTrigger>
+          <TabsTrigger value="shared-with-me">Shared with Me</TabsTrigger>
+          <TabsTrigger value="shared-by-me">Shared by Me</TabsTrigger>
         </TabsList>
 
         <TabsContent value="shared-with-me" className="space-y-4">
-          {sharedWithMe.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Folder className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No items have been shared with you</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  When someone shares a file or folder with you, it will appear here.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {sharedWithMe.map(item => renderSharedItem(item, false))}
-            </div>
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Files Shared with You</CardTitle>
+              <CardDescription>
+                Files and folders that have been shared with you by other users
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="mt-2 text-gray-500">Loading shared items...</p>
+                </div>
+              ) : sharedWithMe.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Folder className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No files have been shared with you yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sharedWithMe.map(renderSharedItem)}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="shared-by-me" className="space-y-4">
-          {sharedByMe.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Share className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">You haven't shared any items yet</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Go to the Files page to share files and folders with users or contacts.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {sharedByMe.map(item => renderSharedItem(item, true))}
-            </div>
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle>Files You've Shared</CardTitle>
+              <CardDescription>
+                Files and folders that you have shared with others
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="mt-2 text-gray-500">Loading shared items...</p>
+                </div>
+              ) : sharedByMe.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Share className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>You haven't shared any files yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sharedByMe.map(renderSharedItem)}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

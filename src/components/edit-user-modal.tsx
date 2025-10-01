@@ -24,7 +24,7 @@ interface User {
   zip: string | null;
   country: string | null;
   image: string | null;
-  userDepartments: Array<{
+  userDepartments?: Array<{
     id: string;
     jobPosition: string;
     isManager: boolean;
@@ -96,12 +96,12 @@ export default function EditUserModal({ user, open, onOpenChange, onUserUpdated 
     roleId: string;
     jobPosition: string;
     isManager: boolean;
-  }>>(user.userDepartments.map(ud => ({
+  }>>(user.userDepartments?.map(ud => ({
     departmentId: ud.department.id,
     roleId: '', // We'll need to map this from department roles
     jobPosition: ud.jobPosition,
     isManager: ud.isManager
-  })));
+  })) || []);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -427,7 +427,6 @@ export default function EditUserModal({ user, open, onOpenChange, onUserUpdated 
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="Enter email address"
-                disabled
               />
             </div>
             <div>

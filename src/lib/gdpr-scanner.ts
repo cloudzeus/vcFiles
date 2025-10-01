@@ -334,3 +334,4 @@ export class GdprScanner {
 
 // Export singleton instance
 export const gdprScanner = new GdprScanner();
+

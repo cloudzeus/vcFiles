@@ -4,11 +4,12 @@ import { UpdateContactCompanyData } from '@/types/business'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; companyId: string } }
+  { params }: { params: Promise<{ id: string; companyId: string }> }
 ) {
   try {
-    const contactId = parseInt(params.id)
-    const companyId = parseInt(params.companyId)
+    const { id, companyId: companyIdParam } = await params
+    const contactId = parseInt(id)
+    const companyId = parseInt(companyIdParam)
     
     if (isNaN(contactId) || isNaN(companyId)) {
       return NextResponse.json(
@@ -65,11 +66,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; companyId: string } }
+  { params }: { params: Promise<{ id: string; companyId: string }> }
 ) {
   try {
-    const contactId = parseInt(params.id)
-    const companyId = parseInt(params.companyId)
+    const { id, companyId: companyIdParam } = await params
+    const contactId = parseInt(id)
+    const companyId = parseInt(companyIdParam)
     
     if (isNaN(contactId) || isNaN(companyId)) {
       return NextResponse.json(

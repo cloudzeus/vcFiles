@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -10,16 +10,32 @@ interface LicenseModalProps {
 }
 
 export default function LicenseModal({ open, onOpenChange }: LicenseModalProps) {
+  const [company, setCompany] = useState({
+    name: '',
+    vat: '',
+    representative: '',
+    address: '',
+    serial: '',
+    issued: '',
+    vendor: '',
+  });
 
-  const company = {
-    name: process.env.NEXT_PUBLIC_COMPANY_NAME,
-    vat: process.env.NEXT_PUBLIC_COMPANY_VAT,
-    representative: process.env.NEXT_PUBLIC_COMPANY_REPRESENTATIVE,
-    address: process.env.NEXT_PUBLIC_COMPANY_ADDRESS,
-    serial: process.env.NEXT_PUBLIC_COMPANY_SERIAL,
-    issued: process.env.NEXT_PUBLIC_COMPANY_ISSUED_DATE,
-    vendor: process.env.NEXT_PUBLIC_VENTOR_NAME,
-  };
+  useEffect(() => {
+    if (!open) return;
+    const load = async () => {
+      try {
+        const res = await fetch('/api/license/company', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.success && data?.company) {
+          setCompany(data.company);
+        }
+      } catch {
+        // ignore, placeholders will show
+      }
+    };
+    load();
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -36,13 +52,13 @@ export default function LicenseModal({ open, onOpenChange }: LicenseModalProps) 
           </p>
 
           <div className="border rounded-lg p-3 bg-gray-50 text-gray-700 space-y-1">
-            <p><strong>Company:</strong> {company.name}</p>
-            <p><strong>VAT:</strong> {company.vat}</p>
-            <p><strong>Representative:</strong> {company.representative}</p>
-            <p><strong>Address:</strong> {company.address}</p>
-            <p><strong>License Serial:</strong> {company.serial}</p>
-            <p><strong>Issued:</strong> {company.issued}</p>
-            <p><strong>Vendor:</strong> {company.vendor}</p>
+            <p><strong>Company:</strong> {company.name || '—'}</p>
+            <p><strong>VAT:</strong> {company.vat || '—'}</p>
+            <p><strong>Representative:</strong> {company.representative || '—'}</p>
+            <p><strong>Address:</strong> {company.address || '—'}</p>
+            <p><strong>License Serial:</strong> {company.serial || '—'}</p>
+            <p><strong>Issued:</strong> {company.issued || '—'}</p>
+            <p><strong>Vendor:</strong> {company.vendor || '—'}</p>
           </div>
 
           <p>

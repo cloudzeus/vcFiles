@@ -91,7 +91,7 @@ export default function EditContactModal({ contact, open, onOpenChange, onContac
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.name.trim()) {
+    if (!formData.name?.trim()) {
       toast({
         title: 'Error',
         description: 'Name is required',

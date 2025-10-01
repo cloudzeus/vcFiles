@@ -3,6 +3,9 @@ import { redirect } from "next/navigation"
 import DashboardLayout from "@/components/dashboard-layout"
 import FilesBrowser from "@/components/files-browser"
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = 'force-dynamic'
+
 export default async function FilesPage() {
   const user = await getCurrentUser()
   
