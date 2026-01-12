@@ -303,7 +303,7 @@ model UserSharedFolder {
 /// GDPR COMPLIANCE AND FILE SCANNING
 model FileScanResult {
   id          String   @id @default(cuid())
-  filePath    String   // Full path to the scanned file
+  filePath    String   @unique // Full path to the scanned file (unique)
   fileName    String   // Name of the file
   scanDate    DateTime @default(now())
   scanStatus  String   // 'pending', 'scanning', 'completed', 'failed'
