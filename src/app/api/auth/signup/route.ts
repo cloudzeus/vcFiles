@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       const storageZone = process.env.BUNNY_STORAGE_ZONE || 'kolleris';
       
       if (apiKey) {
-        const folderPath = `prismafiles/megaparking/users/${user.id}`;
+        const folderPath = `prismafiles/vculture/users/${user.id}`;
         const folderUrl = `https://storage.bunnycdn.com/${storageZone}/${folderPath}/`;
         
         console.log(`Creating user folder: ${folderPath}/`);

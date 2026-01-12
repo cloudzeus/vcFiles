@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth-utils';
 import { prisma } from '@/lib/prisma';
-import { cacheGet, cacheSet, cacheDelete } from '@/lib/redis';
-
-const CACHE_TTL = 300; // 5 minutes
 
 export async function GET(
   request: NextRequest,
@@ -29,17 +26,7 @@ export async function GET(
       );
     }
 
-    // Try to get from cache first
-    const cacheKey = `company:${companyId}`;
-    const cachedCompany = await cacheGet(cacheKey);
-    
-    if (cachedCompany) {
-      return NextResponse.json({
-        success: true,
-        company: cachedCompany,
-        fromCache: true
-      });
-    }
+    // Cache disabled - fetching directly from database
 
     // Get company from database
     const company = await prisma.company.findUnique({
@@ -53,8 +40,7 @@ export async function GET(
       );
     }
 
-    // Cache the company
-    await cacheSet(cacheKey, company, CACHE_TTL);
+    // Cache disabled - skipping cache
 
     return NextResponse.json({
       success: true,
@@ -203,13 +189,7 @@ export async function PUT(
       }
     });
 
-    // Clear related caches
-    await Promise.all([
-      cacheDelete(`company:${companyId}`),
-      cacheDelete('companies:all'),
-      cacheDelete('companies:count'),
-      cacheDelete('companies:1:50::asc'), // Clear first page cache
-    ]);
+    // Cache disabled - skipping cache clear
 
     return NextResponse.json({
       success: true,
@@ -275,13 +255,7 @@ export async function DELETE(
       where: { id: companyId }
     });
 
-    // Clear related caches
-    await Promise.all([
-      cacheDelete(`company:${companyId}`),
-      cacheDelete('companies:all'),
-      cacheDelete('companies:count'),
-      cacheDelete('companies:1:50::asc'), // Clear first page cache
-    ]);
+    // Cache disabled - skipping cache clear
 
     return NextResponse.json({
       success: true,

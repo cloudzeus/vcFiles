@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     
     // Check if it's a department folder
     if (pathParts.includes('departments') && pathParts.length >= 4) {
-      const departmentName = pathParts[3]; // prismafiles/megaparking/departments/[departmentName]
+      const departmentName = pathParts[3]; // prismafiles/vculture/departments/[departmentName]
       
       // Check if user is associated with this department
       const userDepartment = await prisma.userDepartment.findFirst({
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     // Check if it's a user's personal folder
     if (pathParts.includes('users') && pathParts.length >= 4) {
-      const userId = pathParts[3]; // prismafiles/megaparking/users/[userId]
+      const userId = pathParts[3]; // prismafiles/vculture/users/[userId]
       
       // Users can access their own folder
       if (userId === user.id) {

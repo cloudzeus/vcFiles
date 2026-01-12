@@ -23,7 +23,7 @@ interface FolderStructure {
 }
 
 export default function CDNBrowser() {
-  const [currentPath, setCurrentPath] = useState('prismafiles/megaparking');
+  const [currentPath, setCurrentPath] = useState('prismafiles/vculture');
   const [folders, setFolders] = useState<FileItem[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -120,8 +120,8 @@ export default function CDNBrowser() {
 
   // Generate mock data for demonstration
   const generateMockData = (path: string): FileItem[] => {
-    // Since megaparking folder only contains the logo file, return empty for subfolders
-    if (path !== 'prismafiles/megaparking') {
+    // Since vculture folder only contains the logo file, return empty for subfolders
+    if (path !== 'prismafiles/vculture') {
       return [];
     }
     
@@ -146,11 +146,11 @@ export default function CDNBrowser() {
   const navigateBack = useCallback(() => {
     const parentPath = currentPath.split('/').slice(0, -1).join('/');
     if (parentPath === 'prismafiles') {
-      setCurrentPath('prismafiles/megaparking');
-      loadFolderContents('prismafiles/megaparking');
+      setCurrentPath('prismafiles/vculture');
+      loadFolderContents('prismafiles/vculture');
     } else if (parentPath === '') {
-      setCurrentPath('prismafiles/megaparking');
-      loadFolderContents('prismafiles/megaparking');
+      setCurrentPath('prismafiles/vculture');
+      loadFolderContents('prismafiles/vculture');
     } else {
       setCurrentPath(parentPath);
       loadFolderContents(parentPath);
@@ -251,7 +251,7 @@ export default function CDNBrowser() {
               <span className="font-medium text-blue-800">Current CDN Structure</span>
             </div>
             <p className="text-blue-700 text-sm">
-              Root: <code className="bg-blue-100 px-2 py-1 rounded">prismafiles/megaparking</code> 
+              Root: <code className="bg-blue-100 px-2 py-1 rounded">prismafiles/vculture</code> 
               - This folder contains your application logo and any other files you upload.
             </p>
             <p className="text-blue-600 text-xs mt-2">
@@ -297,7 +297,7 @@ export default function CDNBrowser() {
             <div className="flex items-center gap-4 mb-4">
               <Button 
                 onClick={navigateBack} 
-                disabled={currentPath === 'prismafiles/megaparking'}
+                disabled={currentPath === 'prismafiles/vculture'}
                 variant="outline"
               >
                 ← Back

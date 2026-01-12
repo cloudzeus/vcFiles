@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { folderPath = 'prismafiles/megaparking' } = body;
+    const { folderPath = 'prismafiles/vculture' } = body;
 
     const apiKey = process.env.BUNNY_ACCESS_KEY;
     const storageZone = process.env.BUNNY_STORAGE_ZONE || 'kolleris';
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Inline access check
-    const baseRoot = 'prismafiles/megaparking';
+    const baseRoot = 'prismafiles/vculture';
     const normalizedPath = folderPath.replace(/^\/+/, '').replace(/\/+$/, '');
     
     let hasAccess = false;
@@ -110,21 +110,28 @@ export async function POST(request: NextRequest) {
 
     if (Array.isArray(data)) {
       data.forEach((item: any) => {
+        // Extract just the name from the ObjectName (which may be a full path)
+        const objectName = item.ObjectName || '';
+        const itemName = objectName.split('/').filter(Boolean).pop() || objectName;
+        
         if (item.IsDirectory) {
+          // For directories, ObjectName might be like "folderName/" or "path/to/folderName/"
+          const folderName = itemName.replace(/\/$/, '');
           folders.push({
-            name: item.ObjectName.replace(/\/$/, ''), // Remove trailing slash
-            path: `${normalizedPath}/${item.ObjectName.replace(/\/$/, '')}`,
+            name: folderName,
+            path: `${normalizedPath}/${folderName}`,
             type: 'folder',
             size: '0 B',
-            lastModified: item.LastChanged
+            lastModified: item.LastChanged || new Date().toISOString()
           });
         } else {
+          // For files, ObjectName is just the filename
           files.push({
-            name: item.ObjectName,
-            path: `${normalizedPath}/${item.ObjectName}`,
+            name: itemName,
+            path: `${normalizedPath}/${itemName}`,
             type: 'file',
-            size: formatBytes(item.Length),
-            lastModified: item.LastChanged
+            size: formatBytes(item.Length || 0),
+            lastModified: item.LastChanged || new Date().toISOString()
           });
         }
       });

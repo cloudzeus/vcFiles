@@ -1,4 +1,5 @@
 import { PrismaClient, UserRole } from '../src/generated/prisma';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -107,6 +108,24 @@ async function main() {
       data: { parentId: marketing.id }
     });
   }
+
+  // Create admin user first
+  console.log('👤 Creating admin user...');
+  const adminPassword = await bcrypt.hash('1f1femsk', 12);
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'gkozyris@i4ria.com' },
+    update: {
+      password: adminPassword,
+      role: 'ADMINISTRATOR' as UserRole,
+    },
+    create: {
+      email: 'gkozyris@i4ria.com',
+      password: adminPassword,
+      name: 'Admin User',
+      role: 'ADMINISTRATOR' as UserRole,
+    },
+  });
+  console.log('✅ Admin user created/updated:', adminUser.email);
 
   // Create sample users if they don't exist
   const users = [
@@ -217,7 +236,7 @@ async function main() {
   ];
 
   console.log('👥 Creating users...');
-  const createdUsers: any[] = [];
+  const createdUsers: any[] = [adminUser]; // Start with admin user
   
   for (const user of users) {
     const created = await prisma.user.upsert({
@@ -638,8 +657,8 @@ async function main() {
     });
   }
 
-  // Admin gets access to all departments
-  const admin = createdUsers.find(u => u.role === 'ADMINISTRATOR');
+  // Admin gets access to all departments (use the newly created admin user)
+  const admin = adminUser || createdUsers.find(u => u.email === 'gkozyris@i4ria.com' || u.role === 'ADMINISTRATOR');
   if (admin) {
     for (const dept of createdDepartments) {
       await prisma.userDepartment.upsert({

@@ -74,7 +74,7 @@ export default function RedisStatus() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Database className="w-5 h-5" />
-          Redis Connection Status
+          Redis Status (Disabled)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -104,14 +104,11 @@ export default function RedisStatus() {
           {isTesting ? 'Testing...' : 'Test Connection'}
         </Button>
         
-        {status === 'error' && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700">
-              Make sure your Redis server is running and the connection string is correct.
-              Check the console for detailed error messages.
-            </p>
-          </div>
-        )}
+        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700">
+            Redis is disabled. This application is using MySQL only for data storage.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

@@ -205,7 +205,7 @@ export default async function DashboardPage() {
                 </a>
                 {isAdmin && (
                   <div className="space-y-2">
-                    <p className="text-xs text-gray-600">Create local folders for all departments and users in prismafiles/megaparking</p>
+                    <p className="text-xs text-gray-600">Create local folders for all departments and users in prismafiles/vculture</p>
                     <GenerateFoldersButton />
                   </div>
                 )}

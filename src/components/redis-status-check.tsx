@@ -36,10 +36,10 @@ export default function RedisStatusCheck() {
       <span
         className={cn(
           "inline-flex items-center px-2 py-1 rounded-[4px] text-[9px] font-bold text-white",
-          connectionStatus ? "bg-green-600" : "bg-red-600"
+          "bg-gray-600"
         )}
       >
-        {connectionStatus ? "Redis Connected" : "Redis Disconnected"}
+        Redis Disabled
       </span>
     </div>
   );

@@ -5,7 +5,7 @@ A modern, feature-rich file browser component for BunnyCDN with drag-and-drop su
 ## Features
 
 - 🗂️ **File & Folder Navigation**: Browse through your CDN storage with intuitive navigation
-- 🔒 **Security Restricted**: Access limited to `kolleris/prismafiles/megaparking` folder only
+- 🔒 **Security Restricted**: Access limited to `kolleris/prismafiles/vculture` folder only
 - 🔍 **Search & Filter**: Find files quickly with real-time search
 - 📱 **Responsive Design**: Works perfectly on desktop and mobile devices
 - 🎨 **Modern UI**: Beautiful interface with grid and list view modes
@@ -59,7 +59,7 @@ export default function MyPage() {
 
 ### Custom Path
 
-The component automatically starts at the `kolleris/prismafiles/megaparking` folder and restricts access to only this folder and its subfolders. Users cannot navigate to parent directories for security reasons.
+The component automatically starts at the `kolleris/prismafiles/vculture` folder and restricts access to only this folder and its subfolders. Users cannot navigate to parent directories for security reasons.
 
 ## API Endpoints
 
@@ -68,7 +68,7 @@ The component automatically starts at the `kolleris/prismafiles/megaparking` fol
 Fetches the contents of a CDN folder.
 
 **Query Parameters:**
-- `path` (optional): The folder path to browse (defaults to `prismafiles/megaparking`)
+- `path` (optional): The folder path to browse (defaults to `prismafiles/vculture`)
 
 **Response:**
 ```json
@@ -87,8 +87,8 @@ Fetches the contents of a CDN folder.
       "isDirectory": false
     }
   ],
-        "currentPath": "prismafiles/megaparking",
-      "baseUrl": "https://kolleris.b-cdn.net/kolleris/prismafiles/megaparking"
+        "currentPath": "prismafiles/vculture",
+      "baseUrl": "https://kolleris.b-cdn.net/kolleris/prismafiles/vculture"
 }
 ```
 
@@ -106,7 +106,7 @@ Uploads files to the CDN.
   "success": true,
   "message": "File uploaded successfully",
   "fileName": "example.txt",
-        "path": "prismafiles/megaparking/example.txt",
+        "path": "prismafiles/vculture/example.txt",
   "size": 1024
 }
 ```
@@ -168,7 +168,7 @@ The component automatically detects file types and displays appropriate icons. Y
 - API keys are stored server-side only
 - File uploads are validated on the server
 - No sensitive information is exposed to the client
-- **Access Restrictions**: Users can only browse and upload within the `kolleris/prismafiles/megaparking` folder
+- **Access Restrictions**: Users can only browse and upload within the `kolleris/prismafiles/vculture` folder
 - **Server-side Validation**: API endpoints enforce folder access restrictions
 - **Parent Directory Prevention**: Navigation above the restricted root is blocked
 

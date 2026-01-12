@@ -67,7 +67,7 @@ interface CDNResponse {
 
 export default function CDNBrowser() {
   const [files, setFiles] = useState<CDNFile[]>([]);
-  const [currentPath, setCurrentPath] = useState('prismafiles/megaparking');
+  const [currentPath, setCurrentPath] = useState('prismafiles/vculture');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'quick'>('quick');
@@ -78,7 +78,7 @@ export default function CDNBrowser() {
   
   // Cache for storing folder contents
   const [folderCache, setFolderCache] = useState<Record<string, { data: CDNFile[], timestamp: number }>>({});
-  const [lastSuccessfulPath, setLastSuccessfulPath] = useState<string>('prismafiles/megaparking');
+  const [lastSuccessfulPath, setLastSuccessfulPath] = useState<string>('prismafiles/vculture');
 
   // Preload adjacent folders for better performance
   const preloadAdjacentFolders = useCallback(async (currentPath: string) => {
@@ -113,7 +113,7 @@ export default function CDNBrowser() {
     setError(null);
     
     // Check cache first
-    const cacheKey = path || 'prismafiles/megaparking';
+    const cacheKey = path || 'prismafiles/vculture';
     const cachedData = folderCache[cacheKey];
     const cacheAge = Date.now() - (cachedData?.timestamp || 0);
     const cacheValid = cachedData && cacheAge < 5 * 60 * 1000; // 5 minutes
@@ -205,9 +205,9 @@ export default function CDNBrowser() {
     
     // Prevent navigation above the root folder
     if (newPath === 'prismafiles') {
-      setCurrentPath('prismafiles/megaparking');
+      setCurrentPath('prismafiles/vculture');
     } else if (newPath === '') {
-      setCurrentPath('prismafiles/megaparking');
+      setCurrentPath('prismafiles/vculture');
     } else {
       setCurrentPath(newPath);
     }
@@ -215,7 +215,7 @@ export default function CDNBrowser() {
   };
 
   const navigateHome = () => {
-    setCurrentPath('prismafiles/megaparking');
+    setCurrentPath('prismafiles/vculture');
     setSelectedFiles(new Set());
   };
 

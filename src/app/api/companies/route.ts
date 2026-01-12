@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth-utils';
 import { prisma } from '@/lib/prisma';
-import { cacheGet, cacheSet, cacheDelete } from '@/lib/redis';
-
-const CACHE_TTL = 300; // 5 minutes
-const COMPANIES_CACHE_KEY = 'companies:all';
-const COMPANIES_COUNT_CACHE_KEY = 'companies:count';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,17 +21,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'name';
     const sortOrder = searchParams.get('sortOrder') || 'asc';
 
-    // Try to get from cache first
-    const cacheKey = `companies:${page}:${limit}:${search}:${sodtype}:${sortBy}:${sortOrder}`;
-    const cachedData = await cacheGet(cacheKey);
-    
-    if (cachedData) {
-      return NextResponse.json({
-        success: true,
-        ...cachedData,
-        fromCache: true
-      });
-    }
+    // Cache disabled - fetching directly from database
 
     // Build where clause
     const where: any = {};
@@ -98,8 +83,7 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    // Cache the result
-    await cacheSet(cacheKey, result, CACHE_TTL);
+    // Cache disabled - skipping cache
 
     return NextResponse.json({
       success: true,
@@ -219,12 +203,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Clear related caches
-    await Promise.all([
-      cacheDelete(COMPANIES_CACHE_KEY),
-      cacheDelete(COMPANIES_COUNT_CACHE_KEY),
-      cacheDelete('companies:1:50::asc'), // Clear first page cache
-    ]);
+    // Cache disabled - skipping cache clear
 
     return NextResponse.json({
       success: true,

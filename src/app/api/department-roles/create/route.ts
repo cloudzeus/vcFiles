@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       const storageZone = process.env.BUNNY_STORAGE_ZONE || 'kolleris';
       
       if (apiKey) {
-        const folderPath = `prismafiles/megaparking/departments/${newRole.department.name}/roles/${newRole.name}`;
+        const folderPath = `prismafiles/vculture/departments/${newRole.department.name}/roles/${newRole.name}`;
         const folderUrl = `https://storage.bunnycdn.com/${storageZone}/${folderPath}/`;
         
         console.log(`Creating role folder: ${folderPath}/`);

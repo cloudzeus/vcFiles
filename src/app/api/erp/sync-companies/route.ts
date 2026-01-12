@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { cacheClear } from '@/lib/redis'
 
 interface ERPCompany {
   sodtype: string
@@ -201,8 +200,7 @@ export async function POST(request: NextRequest) {
       console.error('❌ Failed to verify database operations:', verifyError)
     }
 
-    // Clear cache to refresh the companies list
-    await cacheClear()
+    // Cache disabled - skipping cache clear
 
     console.log(`🎉 Sync completed successfully!`)
     console.log(`📈 Summary: ${totalSynced} processed, ${totalCreated} created, ${totalUpdated} updated, ${totalErrors} errors`)

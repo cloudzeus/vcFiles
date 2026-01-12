@@ -153,8 +153,15 @@ async function generateGdprReport(startDate: Date, endDate: Date) {
     }
   });
 
-  // Get file scan results in the date range
-  const fileScans = await prisma.fileScanResult.findMany({
+  // Get ALL file scan results (not just in date range) to show current state of files with personal data
+  const allFileScans = await prisma.fileScanResult.findMany({
+    orderBy: {
+      scanDate: 'desc'
+    }
+  });
+
+  // Get file scan results in the date range (for reporting on scans performed in period)
+  const fileScansInPeriod = await prisma.fileScanResult.findMany({
     where: {
       scanDate: {
         gte: startDate,
@@ -163,12 +170,47 @@ async function generateGdprReport(startDate: Date, endDate: Date) {
     }
   });
 
+  // Get files with personal data (current state, regardless of scan date)
+  const filesWithPersonalData = allFileScans.filter(f => f.hasPersonalData);
+  
+  // Group files with personal data by folder
+  const filesByFolder = filesWithPersonalData.reduce((acc, scan) => {
+    const folderPath = scan.filePath.split('/').slice(0, -1).join('/') || 'root';
+    if (!acc[folderPath]) {
+      acc[folderPath] = {
+        folderPath,
+        fileCount: 0,
+        files: [],
+        riskLevels: { low: 0, medium: 0, high: 0, critical: 0 }
+      };
+    }
+    acc[folderPath].fileCount++;
+    acc[folderPath].files.push({
+      path: scan.filePath,
+      name: scan.fileName,
+      riskLevel: scan.riskLevel,
+      personalDataTypes: scan.personalDataTypes ? JSON.parse(scan.personalDataTypes) : [],
+      scanDate: scan.scanDate
+    });
+    acc[folderPath].riskLevels[scan.riskLevel as keyof typeof acc[string]['riskLevels']]++;
+    return acc;
+  }, {} as Record<string, any>);
+
   // Calculate statistics
   const totalSharingAttempts = sharingAttempts.length;
   const blockedAttempts = sharingAttempts.filter(a => !a.gdprCompliant).length;
   const successfulAttempts = sharingAttempts.filter(a => a.gdprCompliant).length;
-  const filesWithPersonalData = fileScans.filter(f => f.hasPersonalData).length;
-  const criticalRiskFiles = fileScans.filter(f => f.riskLevel === 'critical').length;
+  const filesWithPersonalDataCount = filesWithPersonalData.length;
+  const criticalRiskFiles = filesWithPersonalData.filter(f => f.riskLevel === 'critical').length;
+  const highRiskFiles = filesWithPersonalData.filter(f => f.riskLevel === 'high').length;
+  const mediumRiskFiles = filesWithPersonalData.filter(f => f.riskLevel === 'medium').length;
+  const lowRiskFiles = filesWithPersonalData.filter(f => f.riskLevel === 'low').length;
+  
+  // Total files scanned (all time)
+  const totalFilesScanned = allFileScans.length;
+  
+  // Scans performed in this period
+  const scansInPeriod = fileScansInPeriod.length;
 
   // Group by user
   const userStats = sharingAttempts.reduce((acc, attempt) => {
@@ -199,8 +241,8 @@ async function generateGdprReport(startDate: Date, endDate: Date) {
     return acc;
   }, {} as Record<string, any>);
 
-  // Group by risk level
-  const riskLevelStats = fileScans.reduce((acc, scan) => {
+  // Group by risk level (using all files with personal data)
+  const riskLevelStats = filesWithPersonalData.reduce((acc, scan) => {
     const level = scan.riskLevel;
     if (!acc[level]) {
       acc[level] = { count: 0, files: [] };
@@ -209,13 +251,14 @@ async function generateGdprReport(startDate: Date, endDate: Date) {
     acc[level].files.push({
       path: scan.filePath,
       name: scan.fileName,
-      scanDate: scan.scanDate
+      scanDate: scan.scanDate,
+      personalDataTypes: scan.personalDataTypes ? JSON.parse(scan.personalDataTypes) : []
     });
     return acc;
   }, {} as Record<string, any>);
 
-  // Group by personal data type
-  const personalDataTypeStats = fileScans.reduce((acc, scan) => {
+  // Group by personal data type (using all files with personal data)
+  const personalDataTypeStats = filesWithPersonalData.reduce((acc, scan) => {
     if (scan.hasPersonalData && scan.personalDataTypes) {
       try {
         const types = JSON.parse(scan.personalDataTypes);
@@ -227,7 +270,8 @@ async function generateGdprReport(startDate: Date, endDate: Date) {
           acc[type].files.push({
             path: scan.filePath,
             name: scan.fileName,
-            riskLevel: scan.riskLevel
+            riskLevel: scan.riskLevel,
+            scanDate: scan.scanDate
           });
         });
       } catch (e) {
@@ -278,9 +322,32 @@ async function generateGdprReport(startDate: Date, endDate: Date) {
       blockedAttempts,
       successfulAttempts,
       complianceRate: totalSharingAttempts > 0 ? ((successfulAttempts / totalSharingAttempts) * 100).toFixed(2) : '0.00',
-      filesWithPersonalData,
-      criticalRiskFiles
+      // File scanning statistics
+      totalFilesScanned,
+      scansInPeriod,
+      filesWithPersonalData: filesWithPersonalDataCount,
+      criticalRiskFiles,
+      highRiskFiles,
+      mediumRiskFiles,
+      lowRiskFiles,
+      // Folder statistics
+      foldersWithPersonalData: Object.keys(filesByFolder).length
     },
+    // Files and folders with personal data
+    filesWithPersonalData: filesWithPersonalData.map(scan => ({
+      id: scan.id,
+      filePath: scan.filePath,
+      fileName: scan.fileName,
+      scanDate: scan.scanDate,
+      hasPersonalData: scan.hasPersonalData,
+      personalDataTypes: scan.personalDataTypes ? JSON.parse(scan.personalDataTypes) : [],
+      riskLevel: scan.riskLevel,
+      fileType: scan.fileType,
+      fileSize: scan.fileSize,
+      scanDuration: scan.scanDuration,
+      scanErrors: scan.scanErrors
+    })),
+    filesByFolder: Object.values(filesByFolder),
     userStatistics: Object.values(userStats),
     riskLevelBreakdown: riskLevelStats,
     personalDataTypeBreakdown: personalDataTypeStats,
@@ -306,7 +373,8 @@ async function generateGdprReport(startDate: Date, endDate: Date) {
       ipAddress: attempt.ipAddress,
       userAgent: attempt.userAgent
     })),
-    fileScanResults: fileScans.map(scan => ({
+    // Scans performed in the reporting period
+    scansInPeriod: fileScansInPeriod.map(scan => ({
       id: scan.id,
       filePath: scan.filePath,
       fileName: scan.fileName,

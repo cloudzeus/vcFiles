@@ -97,8 +97,8 @@ export async function POST(request: NextRequest) {
     // Helper function to create folder structure in BunnyCDN
     const createBunnyFolder = async (folderPath: string): Promise<boolean> => {
       try {
-        // Create folders inside prismafiles/megaparking
-        const fullPath = `prismafiles/megaparking/${folderPath}`;
+        // Create folders inside prismafiles/vculture
+        const fullPath = `prismafiles/vculture/${folderPath}`;
         
         // First, try to create the folder by PUTting to the folder path with trailing slash
         const folderUrl = `https://storage.bunnycdn.com/${storageZone}/${fullPath}/`;

@@ -19,9 +19,9 @@ export async function GET(request: NextRequest) {
     const testPaths = [
       '', // Root of storage zone
       'prismafiles',
-      'megaparking',
-      'prismafiles/megaparking',
-      'prismafiles/megaparking/prismafiles.svg'
+      'vculture',
+      'prismafiles/vculture',
+      'prismafiles/vculture/prismafiles.svg'
     ];
 
     const results = [];

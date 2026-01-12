@@ -13,6 +13,7 @@ import {
 import ShareItemModal from './share-item-modal'
 import { useRouter } from 'next/navigation'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
+import { toast } from 'sonner'
 
 interface FileItem {
   name: string
@@ -52,12 +53,12 @@ type ViewMode = 'grid' | 'list' | 'detailed'
 export default function FilesBrowser({ user }: FilesBrowserProps) {
   const [items, setItems] = useState<ItemType[]>([])
   const [loading, setLoading] = useState(true)
-  const [currentPath, setCurrentPath] = useState('prismafiles/megaparking')
+  const [currentPath, setCurrentPath] = useState('prismafiles/vculture')
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [subFolders, setSubFolders] = useState<Record<string, ItemType[]>>({})
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
-  const [pathHistory, setPathHistory] = useState<string[]>(['prismafiles/megaparking'])
+  const [pathHistory, setPathHistory] = useState<string[]>(['prismafiles/vculture'])
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [isUploading, setIsUploading] = useState(false)
@@ -72,7 +73,7 @@ export default function FilesBrowser({ user }: FilesBrowserProps) {
   })
   const router = useRouter()
 
-  const baseRoot = 'prismafiles/megaparking'
+  const baseRoot = 'prismafiles/vculture'
 
   // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent) => {
@@ -189,29 +190,28 @@ export default function FilesBrowser({ user }: FilesBrowserProps) {
     
     try {
       const folderPath = `${currentPath}/${newFolderName.trim()}`
-      const apiKey = process.env.BUNNY_ACCESS_KEY
-      const storageZone = process.env.BUNNY_STORAGE_ZONE || 'kolleris'
       
-      if (apiKey) {
-        const folderUrl = `https://storage.bunnycdn.com/${storageZone}/${folderPath}/`
-        
-        const response = await fetch(folderUrl, {
-          method: 'PUT',
-          headers: {
-            'AccessKey': apiKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({})
-        })
+      const response = await fetch('/api/cdn/create-folder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ folderPath })
+      })
 
-        if (response.ok || response.status === 409) {
-          setNewFolderName('')
-          setShowCreateFolderModal(false)
-          await fetchCurrentFolderContents()
-        }
+      const data = await response.json()
+
+      if (data.success) {
+        setNewFolderName('')
+        setShowCreateFolderModal(false)
+        await fetchCurrentFolderContents()
+        toast.success('Folder created successfully')
+      } else {
+        toast.error(data.error || 'Failed to create folder')
       }
     } catch (error) {
       console.error('Error creating folder:', error)
+      toast.error('Failed to create folder')
     }
   }
 
@@ -353,7 +353,7 @@ export default function FilesBrowser({ user }: FilesBrowserProps) {
   const relativePath = currentPath.startsWith(baseRoot) ? currentPath.slice(baseRoot.length) : currentPath
   const relativeParts = relativePath.split('/').filter(Boolean)
   const breadcrumbs = [
-    { name: 'megaparking', path: baseRoot },
+    { name: 'vculture', path: baseRoot },
     ...relativeParts.map((segment, idx) => ({
       name: segment,
       path: [baseRoot, ...relativeParts.slice(0, idx + 1)].join('/')

@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
       const storageZone = process.env.BUNNY_STORAGE_ZONE || 'kolleris';
       
       if (apiKey) {
-        const folderPath = `prismafiles/megaparking/departments/${department.name}`;
+        const folderPath = `prismafiles/vculture/departments/${department.name}`;
         const folderUrl = `https://storage.bunnycdn.com/${storageZone}/${folderPath}/`;
         
         console.log(`Creating department folder: ${folderPath}/`);

@@ -1,67 +1,128 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cacheSet, cacheGet } from '@/lib/redis';
+import { getCurrentUser } from '@/lib/auth-utils';
 
 export async function GET(request: NextRequest) {
   try {
+    // Check authentication
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
-    const path = searchParams.get('path') || 'prismafiles/megaparking';
+    const path = searchParams.get('path') || 'prismafiles/vculture';
     
     console.log('🌐 CDN Browse API called for path:', path);
     
-    // Try to get from cache first
-    const cacheKey = `cdn:api:browse:${path}`;
-    const cachedData = await cacheGet(cacheKey);
+    // BunnyCDN Storage API endpoint
+    const storageZone = process.env.BUNNY_STORAGE_ZONE || 'kolleris';
+    const baseUrl = process.env.BUNNY_STORAGE_URL || 'https://kolleris.b-cdn.net';
+    const apiKey = process.env.BUNNY_ACCESS_KEY;
     
-    if (cachedData && Date.now() - cachedData.lastUpdated < 60000) { // 1 minute cache for API
-      console.log('📖 Using cached API response for:', path);
-      return NextResponse.json(cachedData.data);
+    if (!apiKey) {
+      return NextResponse.json(
+        { success: false, error: 'BunnyCDN API key not configured' },
+        { status: 500 }
+      );
     }
+
+    // Construct the full API URL - BunnyCDN Storage API expects the full path
+    // Ensure path ends with / for directory listing
+    const normalizedPath = path.endsWith('/') ? path : `${path}/`;
+    const apiUrl = `https://storage.bunnycdn.com/${storageZone}/${normalizedPath}`;
     
-    // Mock CDN data - replace with actual CDN API call
-    const mockData = generateMockCDNData(path);
+    console.log('BunnyCDN API Request:', {
+      storageZone,
+      path: normalizedPath,
+      apiUrl
+    });
+
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'AccessKey': apiKey,
+        'Accept': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        // Folder doesn't exist yet, return empty list
+        console.log('Folder not found, returning empty list:', normalizedPath);
+        return NextResponse.json({
+          success: true,
+          data: [],
+          items: [],
+          currentPath: path,
+          totalItems: 0
+        });
+      }
+      
+      const errorText = await response.text();
+      console.error('BunnyCDN API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: apiUrl,
+        error: errorText
+      });
+      
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Failed to fetch CDN contents: ${errorText || response.statusText}` 
+        },
+        { status: response.status }
+      );
+    }
+
+    const data: any[] = await response.json();
     
-    // Cache the response
-    await cacheSet(cacheKey, {
-      data: mockData,
-      lastUpdated: Date.now()
-    }, 60); // 1 minute TTL
-    
-    console.log('💾 Cached CDN browse response for:', path);
-    
-    return NextResponse.json(mockData);
+    // Transform the data to match expected format
+    const transformedData = (Array.isArray(data) ? data : []).map((item: any) => ({
+      ObjectName: item.ObjectName || item.name || '',
+      Length: item.Length || item.size || 0,
+      LastChanged: item.LastChanged || item.lastModified || new Date().toISOString(),
+      IsDirectory: item.IsDirectory !== undefined ? item.IsDirectory : (item.type === 'folder' || item.type === 'directory'),
+      ServerId: item.ServerId || 0,
+      ArrayNumber: item.ArrayNumber || 0,
+      P2PHash: item.P2PHash || '',
+      Replication: item.Replication || 0,
+      StreamCount: item.StreamCount || 0,
+      MetaData: item.MetaData || {},
+      fullUrl: `${baseUrl}/${storageZone}/${item.ObjectName || item.name || ''}`,
+      displayName: (item.ObjectName || item.name || '').split('/').pop() || (item.ObjectName || item.name || ''),
+      size: item.IsDirectory ? null : formatFileSize(item.Length || item.size || 0),
+      lastModified: new Date(item.LastChanged || item.lastModified || new Date()).toLocaleDateString(),
+      isDirectory: item.IsDirectory !== undefined ? item.IsDirectory : (item.type === 'folder' || item.type === 'directory'),
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: transformedData,
+      items: transformedData,
+      currentPath: path,
+      totalItems: transformedData.length
+    });
     
   } catch (error) {
     console.error('❌ CDN Browse API error:', error);
     return NextResponse.json(
-      { error: 'Failed to browse CDN files' },
+      { 
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to browse CDN files' 
+      },
       { status: 500 }
     );
   }
 }
 
-function generateMockCDNData(path: string) {
-  // Since megaparking folder is empty, show actual files or empty state
-  if (path === 'prismafiles/megaparking') {
-    return {
-      items: [
-        // Show the actual prismafiles.svg logo that exists
-        { 
-          name: 'prismafiles.svg', 
-          type: 'file', 
-          path: `${path}/prismafiles.svg`, 
-          size: 25600, 
-          modified: '2024-01-15' 
-        }
-      ],
-      totalItems: 1,
-      currentPath: path
-    };
-  }
-
-  // For any subfolder paths, return empty since they don't exist
-  return {
-    items: [],
-    totalItems: 0,
-    currentPath: path
-  };
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
